@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Drive Image Gallery</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Image Gallery</h1>
+            <p>Displaying images from Google Drive</p>
+        </header>
+        
+        <div class="config-section">
+            <label for="folderId">Google Drive Folder ID:</label>
+            <input type="text" id="folderId" placeholder="Enter folder ID">
+            <button onclick="loadImages()">Load Images</button>
+            <div class="instructions">
+                <p><strong>Setup Instructions:</strong></p>
+                <ol>
+                    <li>Make your Google Drive folder publicly accessible (Anyone with the link can view)</li>
+                    <li>Copy the folder ID from the URL (the part after /folders/)</li>
+                    <li>Paste it above and click "Load Images"</li>
+                </ol>
+            </div>
+        </div>
+        
+        <div id="loading" class="loading" style="display: none;">
+            Loading images...
+        </div>
+        
+        <div id="error" class="error" style="display: none;"></div>
+        
+        <div id="gallery" class="gallery"></div>
+        
+        <div id="lightbox" class="lightbox" style="display: none;" onclick="closeLightbox()">
+            <span class="close">&times;</span>
+            <img id="lightbox-img" src="" alt="">
+            <div class="lightbox-caption"></div>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
