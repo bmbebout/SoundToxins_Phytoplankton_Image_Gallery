@@ -1,5 +1,5 @@
 // Google Drive API configuration
-const API_KEY = 'YOUR_API_AIzaSyAK8CPBr6ihr4VMl10Z0O9qqZOnzL8DJY0'; // You'll need to add your API key
+const API_KEY = 'AIzaSyBwMshM8OiMhmHCxTjqr0OygeMtTg4i0JI';
 
 // Store folder ID in localStorage for convenience
 let currentFolderId = localStorage.getItem('gdrive_folder_id') || '';
