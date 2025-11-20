@@ -1,11 +1,5 @@
-// Image configuration - Add your Google Drive image file IDs here
-// No API key needed! Just make sure images are publicly shared
-const imageList = [
-    // Example format:
-    // { id: '1ABC123xyz...', name: 'Image 1' },
-    // { id: '1DEF456abc...', name: 'Image 2' },
-    // Add your images below:
-];
+// Google Drive API configuration
+const API_KEY = 'YOUR_API_KEY_HERE'; // You'll need to add your API key
 
 // Store folder ID in localStorage for convenience
 let currentFolderId = localStorage.getItem('gdrive_folder_id') || '';
@@ -16,20 +10,26 @@ if (currentFolderId) {
 async function loadImages() {
     const folderId = document.getElementById('folderId').value.trim();
     
+    if (!folderId) {
+        showError('Please enter a Google Drive folder ID');
+        return;
+    }
+    
+    // Save folder ID for next time
+    localStorage.setItem('gdrive_folder_id', folderId);
+    
     // Clear previous content
     document.getElementById('gallery').innerHTML = '';
     document.getElementById('error').style.display = 'none';
     document.getElementById('loading').style.display = 'block';
     
     try {
-        if (imageList.length > 0) {
-            // Use the predefined image list
-            displayImages(imageList);
-        } else if (folderId) {
-            // Try to load from folder using embed method
-            await loadFromFolderEmbed(folderId);
+        // If using API key method
+        if (API_KEY !== 'YOUR_API_KEY_HERE') {
+            await loadWithApiKey(folderId);
         } else {
-            showError('Please add image IDs to the imageList array in script.js, or enter a folder ID to try the embed method.');
+            // Fallback to direct links method
+            await loadWithDirectLinks(folderId);
         }
     } catch (error) {
         console.error('Error loading images:', error);
@@ -39,46 +39,56 @@ async function loadImages() {
     }
 }
 
-async function loadFromFolderEmbed(folderId) {
-    // Save folder ID for next time
-    localStorage.setItem('gdrive_folder_id', folderId);
+async function loadWithApiKey(folderId) {
+    const url = `https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents+and+(mimeType+contains+'image/')&key=${API_KEY}&fields=files(id,name,mimeType,thumbnailLink,webContentLink)`;
     
-    // This method creates an embedded view of the folder
-    // Note: This doesn't give us individual image control, but shows the folder contents
-    const gallery = document.getElementById('gallery');
+    const response = await fetch(url);
     
-    showError('Note: Without an API key, you need to manually add image file IDs to the imageList array in script.js.\n\n' +
-        'To get file IDs:\n' +
-        '1. Open your Google Drive folder\n' +
-        '2. Right-click each image → Get link\n' +
-        '3. The file ID is the part after /d/ or /file/d/ in the URL\n' +
-        '4. Add them to the imageList array in script.js\n\n' +
-        'Example:\nhttps://drive.google.com/file/d/1ABC123xyz.../view\nFile ID: 1ABC123xyz...');
+    if (!response.ok) {
+        throw new Error('Failed to fetch images from Google Drive. Make sure the folder is publicly accessible.');
+    }
+    
+    const data = await response.json();
+    
+    if (!data.files || data.files.length === 0) {
+        showError('No images found in this folder');
+        return;
+    }
+    
+    displayImages(data.files);
 }
 
-function displayImages(images) {
+async function loadWithDirectLinks(folderId) {
+    // This method requires users to manually share each image
+    // It's a simpler approach but less automated
+    showError('Please add your Google API key in script.js or use the manual method below.\n\n' +
+        'To get an API key:\n' +
+        '1. Go to Google Cloud Console (console.cloud.google.com)\n' +
+        '2. Create a new project or select existing\n' +
+        '3. Enable the Google Drive API\n' +
+        '4. Create credentials (API Key)\n' +
+        '5. Paste the key in script.js');
+}
+
+function displayImages(files) {
     const gallery = document.getElementById('gallery');
     
-    images.forEach(image => {
+    files.forEach(file => {
         const item = document.createElement('div');
         item.className = 'gallery-item';
         
         // Use thumbnail for display, full image for lightbox
-        const thumbnailUrl = `https://drive.google.com/thumbnail?id=${image.id}&sz=w400`;
-        const fullImageUrl = `https://drive.google.com/uc?export=view&id=${image.id}`;
+        const thumbnailUrl = file.thumbnailLink || `https://drive.google.com/thumbnail?id=${file.id}&sz=w400`;
+        const fullImageUrl = `https://drive.google.com/uc?export=view&id=${file.id}`;
         
         item.innerHTML = `
-            <img src="${thumbnailUrl}" alt="${image.name}" loading="lazy" onerror="this.onerror=null; this.src='${fullImageUrl}';">
-            <div class="gallery-item-title">${image.name}</div>
+            <img src="${thumbnailUrl}" alt="${file.name}" loading="lazy">
+            <div class="gallery-item-title">${file.name}</div>
         `;
         
-        item.onclick = () => openLightbox(fullImageUrl, image.name);
+        item.onclick = () => openLightbox(fullImageUrl, file.name);
         gallery.appendChild(item);
     });
-    
-    if (images.length === 0) {
-        showError('No images configured. Please add image IDs to the imageList array in script.js.');
-    }
 }
 
 function openLightbox(imageUrl, imageName) {
